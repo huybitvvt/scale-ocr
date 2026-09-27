@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "scale-ocr"
+version = "0.1.0"
+description = "Prepare, annotate, and evaluate scale display OCR data"
+requires-python = ">=3.10"
+dependencies = ["Pillow>=10"]
+
+[project.optional-dependencies]
+test = ["pytest>=8"]
+
+[project.scripts]
+scale-ocr = "scale_ocr.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+scale_ocr = ["annotate.html"]
