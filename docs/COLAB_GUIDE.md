@@ -6,7 +6,7 @@ Luồng thực tế đã xác nhận: camera gắn tại trạm, người dùng 
 
 Code huấn luyện và ba notebook đã được tạo trong thư mục `scale-ocr/` của workspace. Index, split và danh sách 400 ảnh pilot đã sinh từ backup thật. Chưa có nhãn do người duyệt, checkpoint hay kết quả accuracy; notebook train sẽ dừng nếu dataset được duyệt chưa có. Các cell Colab bên dưới và notebook chưa được chạy trên một runtime Colab.
 
-**Bước tiếp theo ngay bây giờ:** chạy công cụ gán nhãn local theo [README của repo](../README.md), kiểm tra các vùng số và giá trị với ảnh thật, rồi nhờ người thứ hai duyệt val/test. Repo GitHub private đã tạo: `https://github.com/huybitvvt/scale-ocr`. Upload ZIP gốc cùng checksum lên Drive. Sau khi export dataset, upload `dataset.zip` và `.sha256` vào `MyDrive/scale-ocr/datasets/v001/`, còn nhãn/index/split vào `MyDrive/scale-ocr/labels/v001/`. Mở notebook trong `notebooks/`; tạo Colab Secret `GITHUB_TOKEN` có quyền đọc repo và điền commit code trước run chính.
+**Bước tiếp theo ngay bây giờ:** chạy công cụ gán nhãn local theo [README của repo](../README.md), kiểm tra các vùng số và giá trị với ảnh thật, rồi nhờ người thứ hai duyệt val/test. Repo GitHub private đã tạo: `https://github.com/huybitvvt/scale-ocr`. Ảnh Drive anh gửi cho thấy ZIP gốc và checksum đã nằm trong `MyDrive/tram-can/`; checksum nội dung sẽ được notebook xác minh sau khi mount. Sau khi export dataset, upload `dataset.zip` và `.sha256` vào `MyDrive/tram-can/datasets/v001/`, còn nhãn/index/split vào `MyDrive/tram-can/labels/v001/`. Mở notebook trong `notebooks/`; tạo Colab Secret `GITHUB_TOKEN` có quyền đọc repo và điền commit code trước run chính.
 
 **0. Kiểm tra luồng bấm chụp trước khi thu thêm dữ liệu**
 
@@ -21,7 +21,7 @@ Chưa có code ứng dụng chụp trong thư mục này. Các kiểm tra tích 
 
 **1. Tạo nơi lưu dữ liệu trên Google Drive**
 
-Tạo thư mục `MyDrive/scale-ocr/raw/`. Upload hai file có sẵn:
+Hai file đã được anh upload trực tiếp vào thư mục `MyDrive/tram-can/`:
 
 ```text
 E:\backup-tramcan\cloudinary_backup_2026-09-27.zip
@@ -34,7 +34,7 @@ Chờ upload hoàn tất rồi kiểm tra kích thước ZIP là 3.607.981.295 b
 07c312b493af9bbab51ff1fec858211c203cc5aa699e865a90f3ebf84ac0c88a
 ```
 
-Giữ bản ZIP này làm dữ liệu gốc. Bộ dữ liệu đã gán nhãn sẽ được đóng gói riêng trong `datasets/v001/`, không ghi đè backup.
+Giữ bản ZIP này làm dữ liệu gốc. Bộ dữ liệu đã gán nhãn sẽ được đóng gói riêng trong `MyDrive/tram-can/datasets/v001/`, không ghi đè backup. Ảnh chụp Drive xác nhận tên file và kích thước hiển thị; bước SHA-256 trong notebook mới xác nhận nội dung chính xác. Khi mount Drive trong Colab, chọn tài khoản Google chứa thư mục `tram-can` (ảnh Drive hiện avatar P).
 
 **2. Đưa code đã chuẩn bị lên Git**
 
@@ -75,7 +75,7 @@ from google.colab import drive
 from pathlib import Path
 
 drive.mount('/content/drive')
-DRIVE_ROOT = Path('/content/drive/MyDrive/scale-ocr')
+DRIVE_ROOT = Path('/content/drive/MyDrive/tram-can')
 LOCAL_ROOT = Path('/content/scale-data')
 LOCAL_ROOT.mkdir(parents=True, exist_ok=True)
 ```
@@ -88,8 +88,8 @@ import shutil
 import zipfile
 
 archive_name = 'cloudinary_backup_2026-09-27.zip'
-source_zip = DRIVE_ROOT / 'raw' / archive_name
-source_checksum = DRIVE_ROOT / 'raw' / (archive_name + '.sha256')
+source_zip = DRIVE_ROOT / archive_name
+source_checksum = DRIVE_ROOT / (archive_name + '.sha256')
 local_zip = LOCAL_ROOT / archive_name
 
 assert source_zip.is_file(), source_zip

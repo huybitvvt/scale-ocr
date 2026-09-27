@@ -365,16 +365,16 @@ scale-ocr/                         # cấu trúc đề xuất, chưa được tr
 ```
 
 ```text
-MyDrive/scale-ocr/
-  raw/
-    cloudinary_backup_2026-09-27.zip
-    cloudinary_backup_2026-09-27.zip.sha256
-  datasets/v001/
-    annotations.jsonl
+MyDrive/tram-can/
+  cloudinary_backup_2026-09-27.zip
+  cloudinary_backup_2026-09-27.zip.sha256
+  labels/v001/
+    index.csv
     split.csv
+    annotations.jsonl
+  datasets/v001/
     dataset.zip
     dataset.zip.sha256
-    dataset_card.json
   runs/<run_id>/
     config.yaml
     environment.txt

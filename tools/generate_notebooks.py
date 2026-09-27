@@ -35,10 +35,11 @@ BOOTSTRAP = code("""
     PROJECT_COMMIT = ''  # Điền commit SHA cố định trước run chính; để trống chỉ khi thăm dò.
     GITHUB_SECRET_NAME = 'GITHUB_TOKEN'  # Tạo token đọc repo trong Colab Secrets.
     VERSION = 'v001'
-    DRIVE_ROOT = Path('/content/drive/MyDrive/scale-ocr')
+    DRIVE_ROOT = Path('/content/drive/MyDrive/tram-can')
     LOCAL_ROOT = Path('/content/scale-data')
     REPO_ROOT = Path('/content/scale-ocr-code')
     drive.mount('/content/drive')
+    assert DRIVE_ROOT.is_dir(), 'Không thấy MyDrive/tram-can: mount đúng tài khoản Google chứa ZIP'
     assert REPO_URL.startswith(('https://', 'git@')), 'Điền REPO_URL sau khi push Git'
     if not REPO_ROOT.exists():
         git_env = os.environ.copy()
@@ -110,13 +111,13 @@ COPY_DATASET = code("""
 write("01_prepare.ipynb", [
     md("""# 01 — Chuẩn bị backup trên Colab
 
-    Chạy sau khi upload ZIP gốc và checksum vào `MyDrive/scale-ocr/raw/`, và push code lên Git. Notebook copy ZIP về `/content`, kiểm tra SHA-256, giải nén rồi tạo index/split/pilot. **Gán nhãn bằng công cụ local trong README**; notebook này chưa tạo ground truth.
+    ZIP gốc và checksum đã được upload vào `MyDrive/tram-can/`. Notebook copy ZIP về `/content`, kiểm tra SHA-256, giải nén rồi tạo index/split/pilot. **Gán nhãn bằng công cụ local trong README**; notebook này chưa tạo ground truth. Khi mount Drive, chọn tài khoản chứa thư mục `tram-can`.
     """),
     BOOTSTRAP,
     code("""
-        source = DRIVE_ROOT / 'raw' / 'cloudinary_backup_2026-09-27.zip'
+        source = DRIVE_ROOT / 'cloudinary_backup_2026-09-27.zip'
         sha_file = source.with_name(source.name + '.sha256')
-        assert source.is_file() and sha_file.is_file(), 'Upload ZIP backup và .sha256 vào Drive/raw'
+        assert source.is_file() and sha_file.is_file(), 'Không thấy ZIP và .sha256 trong MyDrive/tram-can; kiểm tra tài khoản Drive đã mount'
         expected = sha_file.read_text(encoding='ascii').split()[0].lower()
         assert len(expected) == 64
         assert shutil.disk_usage('/content').free > source.stat().st_size * 2, 'Thiếu dung lượng local'
