@@ -2,7 +2,7 @@
 
 Code chuẩn bị dữ liệu và huấn luyện đọc số cân từ ảnh camera. Kế hoạch đầy đủ ở [TRAINING_PLAN.md](docs/TRAINING_PLAN.md) và hướng dẫn Colab ở [COLAB_GUIDE.md](docs/COLAB_GUIDE.md).
 
-Repo này nằm trong `E:\backup-tramcan\scale-ocr`; backup gốc ở thư mục cha. Git chỉ chứa code/notebook/tài liệu. Dữ liệu ảnh, nhãn, split, checkpoint nằm ngoài Git hoặc trong `data/` đã ignore. Hiện chưa có Git remote, chưa có nhãn đã duyệt và chưa có mô hình đã train.
+Repo local nằm trong `E:\backup-tramcan\scale-ocr`; remote private: `https://github.com/huybitvvt/scale-ocr`. Backup gốc ở thư mục cha. Git chỉ chứa code/notebook/tài liệu. Dữ liệu ảnh, nhãn, split, checkpoint nằm ngoài Git hoặc trong `data/` đã ignore. Hiện chưa có nhãn đã duyệt và chưa có mô hình đã train.
 
 ## Chạy giai đoạn chuẩn bị trên Windows
 
@@ -31,15 +31,9 @@ python -m scale_ocr package --source data\v001\prepared --out data\v001\dataset.
 
 ## Git → Drive → Colab
 
-1. Tạo Git remote **private** trên dịch vụ Git anh chọn. Repo local đã sẵn sàng; thêm remote và push sau khi có URL:
-
-   ```powershell
-   git remote add origin <URL_REPO_PRIVATE>
-   git push -u origin main
-   ```
-
-2. Upload `cloudinary_backup_2026-09-27.zip` và `.sha256` lên `MyDrive/scale-ocr/raw/`. Sau khi export, upload `data/v001/dataset.zip` và checksum sang `MyDrive/scale-ocr/datasets/v001/`. Giữ bản nhãn và split riêng trong Drive để có thể chỉnh và kiểm toán.
-3. Mở [01_prepare.ipynb](notebooks/01_prepare.ipynb) trên Colab để kiểm tra backup và tạo index/pilot nếu cần. Sau khi đủ nhãn đã duyệt và upload ZIP đã export, chạy [03_train_reader.ipynb](notebooks/03_train_reader.ipynb); dùng [02_train_detector.ipynb](notebooks/02_train_detector.ipynb) khi ROI theo camera không ổn định hoặc để so sánh. Các notebook copy archive về `/content`, xác minh SHA-256, giải nén và train trên đĩa local. Checkpoint ghi vào Drive. Điền `REPO_URL` và `PROJECT_COMMIT` đã push. Với GitHub private, lưu token chỉ đọc repo trong Colab Secrets và đặt `GITHUB_SECRET_NAME='GITHUB_TOKEN'`; không ghi token vào notebook.
+1. Repo GitHub private đã có ở `https://github.com/huybitvvt/scale-ocr`. Khi sửa code, commit và push từ thư mục này. Không đưa ảnh, nhãn hoặc checkpoint lên Git.
+2. Upload `cloudinary_backup_2026-09-27.zip` và `.sha256` lên `MyDrive/scale-ocr/raw/`. Sau khi export, upload `data/v001/dataset.zip` và checksum sang `MyDrive/scale-ocr/datasets/v001/`. Upload `annotations.jsonl`, `index.csv`, `split.csv` sang `MyDrive/scale-ocr/labels/v001/` để lưu bằng chứng phiên bản.
+3. Mở [01_prepare.ipynb](notebooks/01_prepare.ipynb) trên Colab để kiểm tra backup và tạo index/pilot nếu cần. Sau khi đủ nhãn đã duyệt và upload ZIP đã export, chạy [03_train_reader.ipynb](notebooks/03_train_reader.ipynb); dùng [02_train_detector.ipynb](notebooks/02_train_detector.ipynb) khi ROI theo camera không ổn định hoặc để so sánh. Các notebook copy archive về `/content`, xác minh SHA-256, giải nén và train trên đĩa local. Checkpoint ghi vào Drive. Repo private cần token GitHub có quyền đọc repo, lưu trong Colab Secrets với tên `GITHUB_TOKEN`. Trước run chính, điền `PROJECT_COMMIT` đã push để khóa code; không ghi token vào notebook.
 
 ZIP backup gốc khoảng 3,61 GB. Kiểm tra dung lượng trống trong Colab trước khi copy và giải nén. Không đọc hàng nghìn ảnh trực tiếp từ Drive mount trong vòng lặp train.
 

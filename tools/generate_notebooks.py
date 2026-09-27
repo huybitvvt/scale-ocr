@@ -31,10 +31,9 @@ BOOTSTRAP = code("""
     import hashlib, json, os, shutil, subprocess, sys, zipfile
     from google.colab import drive
 
-    # Điền URL sau khi tạo và push repo Git. Để trống sẽ dừng rõ ràng.
-    REPO_URL = ''
-    PROJECT_COMMIT = ''  # Commit SHA của phiên train; để trống chỉ khi thăm dò.
-    GITHUB_SECRET_NAME = ''  # Repo private: đặt 'GITHUB_TOKEN' và lưu token trong Colab Secrets.
+    REPO_URL = 'https://github.com/huybitvvt/scale-ocr.git'
+    PROJECT_COMMIT = ''  # Điền commit SHA cố định trước run chính; để trống chỉ khi thăm dò.
+    GITHUB_SECRET_NAME = 'GITHUB_TOKEN'  # Tạo token đọc repo trong Colab Secrets.
     VERSION = 'v001'
     DRIVE_ROOT = Path('/content/drive/MyDrive/scale-ocr')
     LOCAL_ROOT = Path('/content/scale-data')
@@ -48,7 +47,9 @@ BOOTSTRAP = code("""
             if GITHUB_SECRET_NAME:
                 from google.colab import userdata
                 assert REPO_URL.startswith('https://github.com/'), 'Secret này chỉ dùng với github.com'
-                git_env['SCALE_GIT_TOKEN'] = userdata.get(GITHUB_SECRET_NAME)
+                token = userdata.get(GITHUB_SECRET_NAME)
+                assert token, 'Chưa có Colab Secret GITHUB_TOKEN hoặc chưa cấp quyền notebook đọc secret'
+                git_env['SCALE_GIT_TOKEN'] = token
                 git_env['GIT_TERMINAL_PROMPT'] = '0'
                 git_env['GIT_ASKPASS'] = str(askpass)
                 askpass.write_text(chr(10).join([

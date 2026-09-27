@@ -6,7 +6,7 @@ Luồng thực tế đã xác nhận: camera gắn tại trạm, người dùng 
 
 Code huấn luyện và ba notebook đã được tạo trong thư mục `scale-ocr/` của workspace. Index, split và danh sách 400 ảnh pilot đã sinh từ backup thật. Chưa có nhãn do người duyệt, checkpoint hay kết quả accuracy; notebook train sẽ dừng nếu dataset được duyệt chưa có. Các cell Colab bên dưới và notebook chưa được chạy trên một runtime Colab.
 
-**Bước tiếp theo ngay bây giờ:** chạy công cụ gán nhãn local theo [README của repo](../README.md), kiểm tra các vùng số và giá trị với ảnh thật, rồi nhờ người thứ hai duyệt val/test. Song song, tạo Git remote và upload ZIP gốc cùng checksum lên Drive. Sau khi export dataset, upload `dataset.zip` và `.sha256` vào `MyDrive/scale-ocr/datasets/v001/`. Mở notebook trong `notebooks/`; điền `REPO_URL` và commit code đã push.
+**Bước tiếp theo ngay bây giờ:** chạy công cụ gán nhãn local theo [README của repo](../README.md), kiểm tra các vùng số và giá trị với ảnh thật, rồi nhờ người thứ hai duyệt val/test. Repo GitHub private đã tạo: `https://github.com/huybitvvt/scale-ocr`. Upload ZIP gốc cùng checksum lên Drive. Sau khi export dataset, upload `dataset.zip` và `.sha256` vào `MyDrive/scale-ocr/datasets/v001/`, còn nhãn/index/split vào `MyDrive/scale-ocr/labels/v001/`. Mở notebook trong `notebooks/`; tạo Colab Secret `GITHUB_TOKEN` có quyền đọc repo và điền commit code trước run chính.
 
 **0. Kiểm tra luồng bấm chụp trước khi thu thêm dữ liệu**
 
@@ -38,15 +38,15 @@ Giữ bản ZIP này làm dữ liệu gốc. Bộ dữ liệu đã gán nhãn s�
 
 **2. Đưa code đã chuẩn bị lên Git**
 
-Repo local nằm tại `E:\backup-tramcan\scale-ocr`. `.gitignore` đã loại ảnh, ZIP, nhãn, dữ liệu xuất và checkpoint. Tạo remote Git phù hợp rồi chạy PowerShell trong thư mục đó:
+Repo local nằm tại `E:\backup-tramcan\scale-ocr`. Remote private đã tạo tại `https://github.com/huybitvvt/scale-ocr`. `.gitignore` đã loại ảnh, ZIP, nhãn, dữ liệu xuất và checkpoint. Sau khi sửa code, chạy PowerShell trong thư mục đó:
 
 ```powershell
 Set-Location E:\backup-tramcan\scale-ocr
-git remote add origin https://github.com/YOUR_ACCOUNT/scale-ocr.git
-git push -u origin main
+git status --short
+git push origin main
 ```
 
-Thay URL bằng repo thật; hiện chưa có URL remote nên chưa thể push. Không đưa ảnh backup, nhãn hoặc token vào commit. Nếu dùng repo private, cần cấu hình quyền clone Git trong Colab trước khi chạy notebook; không điền token vào notebook hay commit.
+Không đưa ảnh backup, nhãn hoặc token vào commit. Repo private cần quyền clone Git trong Colab; notebook đọc token từ Colab Secrets, không đưa token vào Git remote hoặc commit.
 
 **3. Tạo notebook và chọn runtime**
 
