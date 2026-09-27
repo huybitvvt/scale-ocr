@@ -289,8 +289,44 @@ write("03_train_reader.ipynb", [
         }, ensure_ascii=False, indent=2), encoding='utf-8')
         print('Run:', REC_RUN_ID)
     """),
+    md("""## Smoke test trước run chính
+
+    Cell này train 1 epoch trên 64 crop train và 16 crop val. Checkpoint thử nghiệm nằm trong `/content`; chỉ chạy cell train chính nếu smoke test kết thúc thành công và log cho thấy model nạp pretrained đúng.
+    """),
     code("""
-        # Trước run chính, thử 32–64 crop và kiểm tra log pretrained/learning.
+        import copy
+
+        smoke_dir = LOCAL_ROOT / 'smoke' / REC_RUN_ID
+        smoke_dir.mkdir(parents=True, exist_ok=True)
+        train_lines = (rec_root / 'train.txt').read_text(encoding='utf-8').splitlines(keepends=True)
+        val_lines = (rec_root / 'val.txt').read_text(encoding='utf-8').splitlines(keepends=True)
+        assert len(train_lines) >= 64 and len(val_lines) >= 16
+        smoke_train = smoke_dir / 'train.txt'
+        smoke_val = smoke_dir / 'val.txt'
+        smoke_train.write_text(''.join(train_lines[:64]), encoding='utf-8')
+        smoke_val.write_text(''.join(val_lines[:16]), encoding='utf-8')
+        smoke_cfg = copy.deepcopy(cfg)
+        smoke_cfg['Global'].update({
+            'epoch_num': 1, 'save_epoch_step': 1,
+            'eval_batch_step': [0, 4],
+            'save_model_dir': str(smoke_dir / 'checkpoints'),
+        })
+        smoke_cfg['Train']['dataset']['label_file_list'] = [str(smoke_train)]
+        smoke_cfg['Eval']['dataset']['label_file_list'] = [str(smoke_val)]
+        smoke_cfg['Train']['sampler']['first_bs'] = 8
+        smoke_cfg['Train']['loader']['batch_size_per_card'] = 8
+        smoke_cfg['Eval']['loader']['batch_size_per_card'] = 8
+        smoke_config = smoke_dir / 'recognizer_smoke.yaml'
+        smoke_config.write_text(yaml.safe_dump(smoke_cfg, sort_keys=False), encoding='utf-8')
+        subprocess.run([sys.executable, 'tools/train.py', '-c', str(smoke_config)],
+                       cwd=PADDLE_ROOT, check=True)
+        print('Smoke test completed:', smoke_dir)
+    """),
+    md("""## Train reader trên toàn bộ tập train
+
+    Chạy cell này sau khi smoke test thành công. Checkpoint của run chính ghi vào Drive.
+    """),
+    code("""
         subprocess.run([sys.executable, 'tools/train.py', '-c', str(rec_config)],
                        cwd=PADDLE_ROOT, check=True)
     """),

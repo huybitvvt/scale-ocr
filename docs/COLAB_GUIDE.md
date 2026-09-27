@@ -538,7 +538,7 @@ subprocess.run([
 ], cwd=PADDLE_ROOT, check=True)
 ```
 
-Trước run chính thức, tạo config/run riêng cho 32–64 crop train, tắt augmentation, kiểm tra model học được chúng. Sau đó trở về split thật. Kiểm tra log báo pretrained được nạp đúng; nếu head bị bỏ qua do đổi dictionary, đó là thay đổi cần chủ động kiểm soát.
+Notebook `03_train_reader.ipynb` đã có cell smoke test 1 epoch với 64 crop train và 16 crop val, dùng config và checkpoint riêng trong `/content`. Chạy cell đó trước cell train chính; kiểm tra log báo pretrained được nạp đúng. Một epoch chỉ xác nhận pipeline chạy được, chưa chứng minh mô hình đã học tốt hoặc tổng quát hóa. Nếu head bị bỏ qua do đổi dictionary, đó là thay đổi cần chủ động kiểm soát.
 
 Không tự cho rằng metric mặc định của framework khớp tiêu chí nghiệp vụ. Bộ đánh giá riêng phải giữ dấu chấm, dấu âm và số 0 cuối; phân biệt exact string với equal numeric value.
 
