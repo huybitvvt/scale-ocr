@@ -81,12 +81,19 @@ def validate_annotation(data: dict, row: dict) -> dict:
     review_status = data.get("review_status", "draft")
     if review_status not in {"draft", "reviewed"}:
         raise ValueError("Invalid review status")
+    annotator = str(data.get("annotator", "")).strip()[:100]
+    reviewer = str(data.get("reviewer", "")).strip()[:100]
+    if review_status == "reviewed" and not annotator:
+        raise ValueError("Reviewed labels need an annotator")
+    if review_status == "reviewed" and row.get("split") in {"val", "test"}:
+        if not reviewer or reviewer == annotator:
+            raise ValueError("Val/test labels need a different reviewer")
     return {
         "asset_id": row["asset_id"], "public_id": row["public_id"],
         "event_key": row["event_key"], "readability": status,
         "reason": str(data.get("reason", "")).strip()[:200],
-        "annotator": str(data.get("annotator", "")).strip()[:100],
-        "reviewer": str(data.get("reviewer", "")).strip()[:100],
+        "annotator": annotator,
+        "reviewer": reviewer,
         "review_status": review_status,
         "boxes": clean_boxes,
     }

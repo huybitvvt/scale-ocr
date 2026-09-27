@@ -73,6 +73,13 @@ def test_annotation_validation_and_export(tmp_path):
         "boxes": [],
     }
     assert validate_annotation(readable, by_id["c"])["boxes"][0]["text"] == "13.04"
+    test_row = {**by_id["c"], "split": "test"}
+    with pytest.raises(ValueError, match="different reviewer"):
+        validate_annotation({**readable, "reviewer": ""}, test_row)
+    with pytest.raises(ValueError, match="different reviewer"):
+        validate_annotation({**readable, "reviewer": "person-a"}, test_row)
+    with pytest.raises(ValueError, match="annotator"):
+        validate_annotation({**readable, "annotator": ""}, test_row)
     bad = {**readable, "boxes": [{"xyxy": [15, 10, 80, 42], "view_kind": "scene", "text": "1304?"}]}
     with pytest.raises(ValueError):
         validate_annotation(bad, by_id["c"])
