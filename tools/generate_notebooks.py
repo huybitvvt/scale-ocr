@@ -33,7 +33,7 @@ BOOTSTRAP = code("""
 
     REPO_URL = 'https://github.com/huybitvvt/scale-ocr.git'
     PROJECT_COMMIT = ''  # Điền commit SHA cố định trước run chính; để trống chỉ khi thăm dò.
-    GITHUB_SECRET_NAME = 'GITHUB_TOKEN'  # Tạo token đọc repo trong Colab Secrets.
+    GITHUB_SECRET_NAME = ''  # Repo public không cần token; chỉ đặt tên secret nếu chuyển private.
     VERSION = 'v001'
     DRIVE_ROOT = Path('/content/drive/MyDrive/tram-can')
     LOCAL_ROOT = Path('/content/scale-data')

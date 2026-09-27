@@ -429,4 +429,4 @@ Trong pilot tại trạm, kiểm tra thêm: frame có mới đúng lúc bấm ha
 
 Chưa thể dự báo chính xác số giờ GPU khi chưa chạy pilot. Đo thời gian 5 epoch đầu, lượng VRAM và số crop rồi mới dự toán. Dùng GPU được Colab cấp; đừng giả định luôn có cùng loại hoặc cùng thời lượng phiên. GPU mạnh hơn giúp thử nghiệm nhanh hơn nhưng không sửa được nhãn sai và split rò rỉ.
 
-Repo GitHub private đã tạo và push tại `https://github.com/huybitvvt/scale-ocr`. Việc cần làm tiếp: upload ZIP + checksum lên Drive → gán nhãn/duyệt 400 ảnh pilot đã chọn → chốt split và export dataset v001 → chạy baseline → train reader; thêm detector khi ROI theo camera chưa đủ ổn định. Hướng dẫn thao tác nằm trong [COLAB_GUIDE.md](COLAB_GUIDE.md).
+Repo GitHub public đã tạo và push tại `https://github.com/huybitvvt/scale-ocr`. ZIP + checksum đã được upload vào `MyDrive/tram-can/` theo ảnh Drive anh gửi; notebook sẽ xác minh SHA-256 sau khi mount đúng tài khoản. Việc cần làm tiếp: gán nhãn/duyệt 400 ảnh pilot đã chọn → chốt split và export dataset v001 → chạy baseline → train reader; thêm detector khi ROI theo camera chưa đủ ổn định. Hướng dẫn thao tác nằm trong [COLAB_GUIDE.md](COLAB_GUIDE.md).

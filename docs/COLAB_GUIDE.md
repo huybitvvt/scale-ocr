@@ -6,7 +6,7 @@ Luồng thực tế đã xác nhận: camera gắn tại trạm, người dùng 
 
 Code huấn luyện và ba notebook đã được tạo trong thư mục `scale-ocr/` của workspace. Index, split và danh sách 400 ảnh pilot đã sinh từ backup thật. Chưa có nhãn do người duyệt, checkpoint hay kết quả accuracy; notebook train sẽ dừng nếu dataset được duyệt chưa có. Các cell Colab bên dưới và notebook chưa được chạy trên một runtime Colab.
 
-**Bước tiếp theo ngay bây giờ:** chạy công cụ gán nhãn local theo [README của repo](../README.md), kiểm tra các vùng số và giá trị với ảnh thật, rồi nhờ người thứ hai duyệt val/test. Repo GitHub private đã tạo: `https://github.com/huybitvvt/scale-ocr`. Ảnh Drive anh gửi cho thấy ZIP gốc và checksum đã nằm trong `MyDrive/tram-can/`; checksum nội dung sẽ được notebook xác minh sau khi mount. Sau khi export dataset, upload `dataset.zip` và `.sha256` vào `MyDrive/tram-can/datasets/v001/`, còn nhãn/index/split vào `MyDrive/tram-can/labels/v001/`. Mở notebook trong `notebooks/`; tạo Colab Secret `GITHUB_TOKEN` có quyền đọc repo và điền commit code trước run chính.
+**Bước tiếp theo ngay bây giờ:** mở công cụ gán nhãn local tại `http://127.0.0.1:8765/` (đã bật trong phiên này; nếu không mở được, chạy lệnh ở bước 7), kiểm tra các vùng số và giá trị với ảnh thật, rồi nhờ người thứ hai duyệt val/test. Repo GitHub public: `https://github.com/huybitvvt/scale-ocr`. Ảnh Drive anh gửi cho thấy ZIP gốc và checksum đã nằm trong `MyDrive/tram-can/`; checksum nội dung sẽ được notebook xác minh sau khi mount. Sau khi export dataset, upload `dataset.zip` và `.sha256` vào `MyDrive/tram-can/datasets/v001/`, còn nhãn/index/split vào `MyDrive/tram-can/labels/v001/`. Mở notebook trong `notebooks/`; repo public không cần GitHub token. Điền commit code trước run chính.
 
 **0. Kiểm tra luồng bấm chụp trước khi thu thêm dữ liệu**
 
@@ -38,7 +38,7 @@ Giữ bản ZIP này làm dữ liệu gốc. Bộ dữ liệu đã gán nhãn s�
 
 **2. Đưa code đã chuẩn bị lên Git**
 
-Repo local nằm tại `E:\backup-tramcan\scale-ocr`. Remote private đã tạo tại `https://github.com/huybitvvt/scale-ocr`. `.gitignore` đã loại ảnh, ZIP, nhãn, dữ liệu xuất và checkpoint. Sau khi sửa code, chạy PowerShell trong thư mục đó:
+Repo local nằm tại `E:\backup-tramcan\scale-ocr`. Remote public tại `https://github.com/huybitvvt/scale-ocr`. `.gitignore` đã loại ảnh, ZIP, nhãn, dữ liệu xuất và checkpoint. Sau khi sửa code, chạy PowerShell trong thư mục đó:
 
 ```powershell
 Set-Location E:\backup-tramcan\scale-ocr
@@ -46,7 +46,7 @@ git status --short
 git push origin main
 ```
 
-Không đưa ảnh backup, nhãn hoặc token vào commit. Repo private cần quyền clone Git trong Colab; notebook đọc token từ Colab Secrets, không đưa token vào Git remote hoặc commit.
+Không đưa ảnh backup, nhãn hoặc token vào commit. Repo public clone trực tiếp trong Colab.
 
 **3. Tạo notebook và chọn runtime**
 
@@ -117,17 +117,16 @@ Trong những phiên sau, có thể dùng archive dataset đã xử lý thay vì
 
 **5. Clone code và khóa phiên bản**
 
-Cell này dành cho repo đọc được bằng HTTPS. Thay hai placeholder trước khi chạy:
+Cell này dành cho repo hiện tại. Thay `PROJECT_COMMIT` trước run chính:
 
 ```python
 import subprocess
 from pathlib import Path
 
-REPO_URL = 'https://github.com/YOUR_ACCOUNT/scale-ocr.git'
+REPO_URL = 'https://github.com/huybitvvt/scale-ocr.git'
 PROJECT_COMMIT = 'REPLACE_WITH_FULL_COMMIT_SHA'
 CODE_ROOT = Path('/content/scale-ocr')
 
-assert 'YOUR_ACCOUNT' not in REPO_URL
 assert PROJECT_COMMIT != 'REPLACE_WITH_FULL_COMMIT_SHA'
 if not CODE_ROOT.exists():
     subprocess.run(['git', 'clone', REPO_URL, str(CODE_ROOT)], check=True)
@@ -141,51 +140,7 @@ print(subprocess.check_output(
 ).strip())
 ```
 
-Repo riêng tư cần cấu hình xác thực trước khi clone. Với GitHub có thể dùng token chỉ đọc repository, lưu trong Colab Secrets. Không chèn token vào URL được in ra, notebook hoặc Git remote. Việc mở notebook riêng tư qua giao diện Colab không có nghĩa mọi lệnh `git clone` trong runtime đã được xác thực.
-
-Nếu dùng token trong runtime, một cách là GIT_ASKPASS tạm thời. Chạy cell này thay cho bước clone trong cell trên, sau khi đặt secret tên `GITHUB_TOKEN`; chỉ dùng cho repo của bạn trên `github.com`:
-
-```python
-import os
-import subprocess
-from pathlib import Path
-from google.colab import userdata
-
-askpass = Path('/content/scale-ocr-askpass.sh')
-askpass.write_text(
-    '#!/bin/sh\n'
-    'case "$1" in\n'
-    '  *Username*) printf "%s\\n" "x-access-token" ;;\n'
-    '  *) printf "%s\\n" "$SCALE_GIT_TOKEN" ;;\n'
-    'esac\n'
-)
-askpass.chmod(0o700)
-git_env = os.environ.copy()
-git_env.update({
-    'GIT_ASKPASS': str(askpass),
-    'GIT_TERMINAL_PROMPT': '0',
-    'SCALE_GIT_TOKEN': userdata.get('GITHUB_TOKEN'),
-})
-try:
-    if not CODE_ROOT.exists():
-        subprocess.run(
-            ['git', 'clone', REPO_URL, str(CODE_ROOT)],
-            env=git_env, check=True,
-        )
-    else:
-        subprocess.run(
-            ['git', '-C', str(CODE_ROOT), 'fetch', 'origin'],
-            env=git_env, check=True,
-        )
-finally:
-    git_env.pop('SCALE_GIT_TOKEN', None)
-    askpass.unlink(missing_ok=True)
-
-subprocess.run(
-    ['git', '-C', str(CODE_ROOT), 'checkout', '--detach', PROJECT_COMMIT],
-    check=True,
-)
-```
+Repo hiện public nên notebook clone qua HTTPS trực tiếp. Nếu sau này đổi về private, xem biến `GITHUB_SECRET_NAME` trong notebook và lưu token chỉ đọc repo trong Colab Secrets; không ghi token vào code.
 
 Giữ cố định commit khi chạy một thí nghiệm. Không `git pull` tùy ý giữa lúc train rồi tiếp tục ghi cùng run ID.
 
