@@ -33,6 +33,7 @@ def export_dataset(raw_root: Path, index_path: Path, split_path: Path,
             (base / split).mkdir(parents=True, exist_ok=True)
     rec_labels = {split: [] for split in ("train", "val", "test")}
     crop_map = []
+    evaluation_rows = []
     counts = Counter()
     for asset_id in sorted(annotations):
         row = index[asset_id]
@@ -49,12 +50,6 @@ def export_dataset(raw_root: Path, index_path: Path, split_path: Path,
             not ann["reviewer"] or ann["reviewer"] == ann["annotator"]
         ):
             raise ValueError(f"Independent reviewer required for {split}: {asset_id}")
-        if ann["readability"] not in {"readable", "partial", "unreadable", "no_display"}:
-            counts["non_numeric_skipped"] += 1
-            continue
-        if ann["readability"] != "no_display" and not ann["boxes"]:
-            counts["no_box_skipped"] += 1
-            continue
         source = raw_root / row["local_file"]
         if not source.is_file():
             raise FileNotFoundError(source)
@@ -67,8 +62,31 @@ def export_dataset(raw_root: Path, index_path: Path, split_path: Path,
         if suffix not in {".jpg", ".jpeg", ".png"}:
             counts["unsupported_format_skipped"] += 1
             continue
-        target_image = detector_root / "images" / split / f"{asset_id}{suffix}"
+        skip_reason = ""
+        if ann["readability"] not in {"readable", "partial", "unreadable", "no_display"}:
+            skip_reason = "non_numeric"
+        elif ann["readability"] != "no_display" and not ann["boxes"]:
+            skip_reason = "no_box"
+        if skip_reason:
+            relative_image = Path("evaluation") / "other" / split / f"{asset_id}{suffix}"
+        else:
+            relative_image = Path("detector") / "images" / split / f"{asset_id}{suffix}"
+        target_image = destination / relative_image
+        target_image.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source, target_image)
+        evaluation_rows.append({
+            "sample_id": asset_id, "gateway": row["gateway"],
+            "event_key": row["event_key"], "split": split,
+            "readability": ann["readability"],
+            "gt_text": ann["boxes"][0]["text"] if ann["readability"] == "readable" else "",
+            "image_path": relative_image.as_posix(),
+            "training_export": "no" if skip_reason else "yes",
+            "skip_reason": skip_reason,
+        })
+        counts[f"evaluation_images_{split}"] += 1
+        if skip_reason:
+            counts[f"{skip_reason}_skipped"] += 1
+            continue
         yolo_lines = []
         for box_index, box in enumerate(ann["boxes"]):
             x1, y1, x2, y2 = box["xyxy"]
@@ -101,6 +119,9 @@ def export_dataset(raw_root: Path, index_path: Path, split_path: Path,
         (recognizer_root / f"{split}.txt").write_text("".join(lines), encoding="utf-8")
     write_csv(destination / "crop_map.csv", crop_map,
               ("asset_id", "event_key", "group_id", "split", "view_kind", "crop_path", "display_text"))
+    write_csv(destination / "evaluation_manifest.csv", evaluation_rows,
+              ("sample_id", "gateway", "event_key", "split", "readability", "gt_text",
+               "image_path", "training_export", "skip_reason"))
     yaml_path = detector_root.as_posix()
     (detector_root / "data.yaml").write_text(
         f"path: {json.dumps(yaml_path)}\ntrain: images/train\nval: images/val\n"

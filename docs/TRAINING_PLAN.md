@@ -8,7 +8,7 @@ Luồng sử dụng đã xác nhận thêm: **camera gắn tại trạm → ngư
 
 Đề xuất: xây pipeline **lấy đúng ảnh của lần chụp → xác định vùng màn hình → nhận dạng chuỗi → kiểm tra chất lượng → trả số hoặc yêu cầu kiểm tra lại**. Với camera có góc cố định, thử ROI đã hiệu chỉnh cho từng camera và reader PP-OCRv5 fine-tune trước; so sánh với YOLO pretrained để định vị khi góc/bố cục thay đổi. So sánh reader với CRNN chuyên chữ số và bộ đọc bảy đoạn. Chọn bằng kết quả trên dữ liệu giữ riêng, không chọn theo tên model hay kích thước model.
 
-Code chuẩn bị dữ liệu, công cụ gán nhãn local và ba notebook Colab hiện nằm trong `scale-ocr/`. Đã sinh index 9.260 ảnh, split sơ bộ (train 5.387; val 1.954; test 1.715; exclude 204) và danh sách pilot 400 ảnh. Chưa có bộ nhãn đã duyệt, chưa train, chưa đo accuracy. Các ngưỡng, số lượng nhãn và siêu tham số dưới đây là điểm bắt đầu đề xuất. Hướng dẫn thao tác ở [COLAB_GUIDE.md](COLAB_GUIDE.md).
+Code chuẩn bị dữ liệu, công cụ gán nhãn local và ba notebook Colab hiện nằm trong `scale-ocr/`. Đã sinh index 9.260 ảnh, split sơ bộ (train 5.387; val 1.954; test 1.715; exclude 204) và bộ pilot 400 ảnh đã được người dùng duyệt. Dataset v001 đã xuất và đóng gói; chưa train hoặc đo accuracy. Các ngưỡng, số lượng nhãn và siêu tham số dưới đây là điểm bắt đầu đề xuất. Hướng dẫn thao tác ở [COLAB_GUIDE.md](COLAB_GUIDE.md).
 
 **1. Dữ liệu hiện có và hệ quả đối với việc train**
 
@@ -429,4 +429,4 @@ Trong pilot tại trạm, kiểm tra thêm: frame có mới đúng lúc bấm ha
 
 Chưa thể dự báo chính xác số giờ GPU khi chưa chạy pilot. Đo thời gian 5 epoch đầu, lượng VRAM và số crop rồi mới dự toán. Dùng GPU được Colab cấp; đừng giả định luôn có cùng loại hoặc cùng thời lượng phiên. GPU mạnh hơn giúp thử nghiệm nhanh hơn nhưng không sửa được nhãn sai và split rò rỉ.
 
-Repo GitHub public đã tạo và push tại `https://github.com/huybitvvt/scale-ocr`. ZIP + checksum đã được upload vào `MyDrive/tram-can/` theo ảnh Drive anh gửi; notebook sẽ xác minh SHA-256 sau khi mount đúng tài khoản. Việc cần làm tiếp: gán nhãn/duyệt 400 ảnh pilot đã chọn → chốt split và export dataset v001 → chạy baseline → train reader; thêm detector khi ROI theo camera chưa đủ ổn định. Hướng dẫn thao tác nằm trong [COLAB_GUIDE.md](COLAB_GUIDE.md).
+Repo GitHub public đã tạo và push tại `https://github.com/huybitvvt/scale-ocr`. ZIP backup gốc + checksum đã được upload vào `MyDrive/tram-can/` theo ảnh Drive anh gửi. 400 nhãn pilot đã duyệt, split và dataset v001 đã chốt ở local. Việc cần làm tiếp: upload `dataset.zip`, `labels_reviewed_v001.zip` và hai checksum lên Drive → chạy smoke test reader trên Colab → train reader baseline → đánh giá test và chọn thêm ảnh khó để gán v002. Thêm detector khi ROI theo camera chưa đủ ổn định. `gateway-03` mới có 5 ảnh train, không có val/test; cần thu thêm để đo chất lượng camera này. Hướng dẫn thao tác nằm trong [COLAB_GUIDE.md](COLAB_GUIDE.md).

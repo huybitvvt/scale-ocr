@@ -97,6 +97,9 @@ def test_annotation_validation_and_export(tmp_path):
     assert (output / "recognizer/test.txt").read_text().endswith("\t13.04\n")
     crop_map = read_csv(output / "crop_map.csv")
     assert crop_map[0]["group_id"]
+    evaluation = read_csv(output / "evaluation_manifest.csv")
+    assert len(evaluation) == 2
+    assert all((output / row["image_path"]).is_file() for row in evaluation)
     archive = tmp_path / "dataset.zip"
     digest = package_dataset(output, archive)
     assert digest in archive.with_name("dataset.zip.sha256").read_text()
@@ -105,6 +108,28 @@ def test_annotation_validation_and_export(tmp_path):
         assert "dataset_card.json" in bundle.namelist()
     with pytest.raises(FileExistsError):
         export_dataset(raw, index_path, split_path, ann_path, output)
+
+
+def test_export_keeps_unreadable_image_for_evaluation(tmp_path):
+    raw = fixture_backup(tmp_path)
+    index_path, split_path, ann_path = [
+        tmp_path / name for name in ("index.csv", "split.csv", "annotations.jsonl")
+    ]
+    build_index(raw, index_path)
+    make_split(index_path, split_path)
+    ann_path.write_text(json.dumps({
+        "asset_id": "d", "readability": "unreadable", "review_status": "reviewed",
+        "annotator": "person-a", "reviewer": "person-b", "boxes": [],
+    }) + "\n", encoding="utf-8")
+    output = tmp_path / "prepared"
+    card = export_dataset(raw, index_path, split_path, ann_path, output)
+    assert card["counts"]["no_box_skipped"] == 1
+    assert card["counts"]["evaluation_images_test"] == 1
+    assert card["counts"].get("detector_images_test", 0) == 0
+    row = read_csv(output / "evaluation_manifest.csv")[0]
+    assert row["readability"] == "unreadable"
+    assert row["training_export"] == "no"
+    assert (output / row["image_path"]).is_file()
 
 
 def test_evaluation_counts_abstention_and_false_accept():

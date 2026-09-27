@@ -224,7 +224,7 @@ write("03_train_reader.ipynb", [
     code("""
         # Ví dụ wheel CUDA 12.6 theo hướng dẫn Paddle; sửa theo runtime hiện được cấp.
         PADDLE_WHEEL_INDEX = 'https://www.paddlepaddle.org.cn/packages/stable/cu126/'
-        PADDLE_WHEEL = 'paddlepaddle-gpu==3.2.0'
+        PADDLE_WHEEL = 'paddlepaddle-gpu==3.3.0'
         subprocess.run([sys.executable, '-m', 'pip', 'install', PADDLE_WHEEL,
                         '-i', PADDLE_WHEEL_INDEX], check=True)
         PADDLE_ROOT = Path('/content/PaddleOCR')

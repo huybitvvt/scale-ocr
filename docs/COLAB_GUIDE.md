@@ -4,9 +4,9 @@
 
 Luồng thực tế đã xác nhận: camera gắn tại trạm, người dùng bấm chụp và nhận ảnh như backup. Train reader trên các ảnh chụp này; sau train, ứng dụng gửi ảnh của từng lần bấm cho model đã triển khai để lấy số. Colab phục vụ huấn luyện; nơi chạy model tại trạm/backend sẽ chọn theo phần cứng và độ trễ thực tế.
 
-Code huấn luyện và ba notebook đã được tạo trong thư mục `scale-ocr/` của workspace. Index, split và danh sách 400 ảnh pilot đã sinh từ backup thật. Cả 400 ảnh pilot hiện đã có nhãn **nháp** tại `data/v001/annotations.jsonl`, gồm 388 ảnh đọc được số, 6 ảnh không thấy số, 5 ảnh không đọc được và 1 ảnh chỉ hiện một phần. Nhãn OCR đã được rà trực quan nhưng chưa được người duyệt xác nhận, nên chưa có checkpoint hay kết quả accuracy đáng tin cậy; notebook train sẽ dừng nếu dataset được duyệt chưa có. Các cell Colab bên dưới và notebook chưa được chạy trên một runtime Colab.
+Code huấn luyện và ba notebook đã được tạo trong thư mục `scale-ocr/` của workspace. Index, split và danh sách 400 ảnh pilot đã sinh từ backup thật. **400/400 nhãn đã được người dùng duyệt**; bản cố định ở `data/v001/release/`. Dataset v001 đã xuất và đóng gói tại `data/v001/dataset.zip`. Chưa có checkpoint hay kết quả accuracy; các cell Colab và notebook chưa được chạy trên một runtime Colab.
 
-**Bước tiếp theo ngay bây giờ:** mở công cụ gán nhãn local tại `http://127.0.0.1:8765/` (đã bật trong phiên này; nếu không mở được, chạy lệnh ở bước 7), rà số và khung đã điền sẵn với ảnh thật, sửa sai rồi đánh dấu duyệt. Các vùng số được phóng to ngay trong công cụ để kiểm tra. Với val/test, reviewer phải là người khác người gán nhãn nháp `codex-ocr-assisted`. Repo GitHub public: `https://github.com/huybitvvt/scale-ocr`. Ảnh Drive anh gửi cho thấy ZIP gốc và checksum đã nằm trong `MyDrive/tram-can/`; checksum nội dung sẽ được notebook xác minh sau khi mount. Sau khi export dataset, upload `dataset.zip` và `.sha256` vào `MyDrive/tram-can/datasets/v001/`, còn nhãn/index/split vào `MyDrive/tram-can/labels/v001/`. Mở notebook trong `notebooks/`; repo public không cần GitHub token. Điền commit code trước run chính.
+**Bước tiếp theo ngay bây giờ:** upload `data/v001/dataset.zip` và `dataset.zip.sha256` vào `MyDrive/tram-can/datasets/v001/`; upload `labels_reviewed_v001.zip` và checksum vào `MyDrive/tram-can/labels/v001/`. Sau đó mở `notebooks/03_train_reader.ipynb` trên Colab bằng đúng tài khoản Drive chứa thư mục `tram-can`. Repo GitHub public: `https://github.com/huybitvvt/scale-ocr`, không cần GitHub token. Điền commit code đã push vào `PROJECT_COMMIT` trước run chính. ZIP gốc đã nằm trong `MyDrive/tram-can/` theo ảnh Drive; notebook sẽ tự xác minh checksum của dataset đã xử lý sau khi mount.
 
 **0. Kiểm tra luồng bấm chụp trước khi thu thêm dữ liệu**
 
@@ -174,14 +174,14 @@ Trên Windows, chạy CLI từ `E:\backup-tramcan\scale-ocr` với index/split/p
 python -m scale_ocr annotate --pilot data\v001\pilot.csv --raw-root ..\cloudinary_backup_2026-09-27 --out data\v001\annotations.jsonl
 ```
 
-Sau khi gán nhãn và reviewer độc lập duyệt val/test, export và đóng gói:
+400 nhãn đã duyệt và được chốt tại `data/v001/release/`. Lệnh đã chạy để xuất và đóng gói:
 
 ```powershell
-python -m scale_ocr export --raw-root ..\cloudinary_backup_2026-09-27 --index data\v001\index.csv --split data\v001\split.csv --annotations data\v001\annotations.jsonl --out data\v001\prepared
-python -m scale_ocr package --source data\v001\prepared --out data\v001\dataset.zip
+python -m scale_ocr export --raw-root ..\cloudinary_backup_2026-09-27 --index data\v001\release\index.csv --split data\v001\release\split.csv --annotations data\v001\release\annotations.jsonl --out data\v001\prepared_release
+python -m scale_ocr package --source data\v001\prepared_release --out data\v001\dataset.zip
 ```
 
-Upload cả `dataset.zip` và `dataset.zip.sha256` sang Drive. Giữ `annotations.jsonl`, `index.csv`, `split.csv` làm bằng chứng phiên bản; không upload dữ liệu chưa duyệt làm dataset train chính.
+Upload cả `dataset.zip` và `dataset.zip.sha256` sang Drive. ZIP `labels_reviewed_v001.zip` chứa nhãn/index/split/pilot cố định cùng manifest SHA-256; upload nó và checksum sang thư mục `labels/v001/`. Dataset chứa `evaluation_manifest.csv` cho đủ 400 ảnh, gồm cả 5 ảnh không thể tạo crop train.
 
 Tạo khoảng 300–500 ảnh pilot đa dạng để gán nhãn. Với ảnh ghép có layout đã xác minh, tạo scene view và zoom view; ảnh chưa nhận diện được layout giữ nguyên full view. Mỗi view phải ghi lại asset cha, tọa độ trên ảnh cha và group ID.
 
@@ -198,6 +198,8 @@ Sau khi duyệt, cần có ba sản phẩm:
 | `annotations.jsonl` | Nhãn đầy đủ, source/view/group, bbox, text, readability, người duyệt |
 | `split.csv` | Mỗi asset/view có group ID và train/val/test cố định |
 | Dataset xuất ra | Detection YOLO + crop recognition + danh mục ảnh âm/không đọc được |
+
+Dataset v001 thực tế: 137 crop train, 131 crop val, 123 crop test. `evaluation_manifest.csv` có 140/135/125 ảnh theo train/val/test. `gateway-03` chỉ có 5 ảnh train và không có ảnh val/test, vì vậy chưa thể kết luận chất lượng cho gateway này.
 
 Dataset detection sau export:
 
@@ -407,14 +409,14 @@ Các hash nhãn/split/dataset/config phải được bổ sung trước run chí
 
 Mở runtime GPU mới cho reader, chạy lại mount Drive và chuẩn bị dataset local. PaddleOCR có phần inference package và phần source huấn luyện; cài package inference không thay thế việc lấy source/config train.
 
-Tại thời điểm lập tài liệu, hướng dẫn PaddleOCR có wheel `paddlepaddle-gpu==3.2.0` cho CUDA 12.6 với yêu cầu driver Linux từ 550.54.14. Kiểm tra driver và Python của runtime; chỉ dùng cell dưới nếu có wheel phù hợp. Nếu không phù hợp, chọn wheel khác theo tài liệu chính thức. [Hướng dẫn cài PaddlePaddle](https://github.com/PaddlePaddle/PaddleOCR/blob/main/docs/version3.x/paddlepaddle_installation.en.md).
+Tài liệu PaddlePaddle hiện liệt kê wheel `paddlepaddle-gpu==3.3.0` cho CUDA 12.6. Kiểm tra GPU, driver, Python và runtime Colab thực tế; chỉ dùng cell dưới nếu wheel phù hợp. Với CUDA khác, chọn đúng wheel theo [hướng dẫn cài PaddlePaddle chính thức](https://www.paddlepaddle.org.cn/documentation/docs/en/install/pip/linux-pip_en.html). Sau cài đặt, chạy `paddle.utils.run_check()` như notebook.
 
 ```python
 import subprocess
 import sys
 
 subprocess.run([
-    sys.executable, '-m', 'pip', 'install', 'paddlepaddle-gpu==3.2.0',
+    sys.executable, '-m', 'pip', 'install', 'paddlepaddle-gpu==3.3.0',
     '-i', 'https://www.paddlepaddle.org.cn/packages/stable/cu126/',
 ], check=True)
 ```
@@ -610,11 +612,11 @@ Mỗi phiên bản model cần đủ: detector, reader, dictionary, cấu hình 
 
 | Phần | Trạng thái | Bước kiểm chứng/triển khai tiếp |
 |---|---|---|
-| `inventory.py`, `splits.py`, `pilot.py` | Đã có; chạy trên backup thật | Rà soát ảnh pilot, xác nhận nhóm event và 204 ảnh exclude |
-| `annotations.py`, `export.py`, `package.py` | Đã có; test synthetic | Người gán nhãn và reviewer dùng trên ảnh thật; kiểm tra crop trước train |
+| `inventory.py`, `splits.py`, `pilot.py` | Đã có; chạy trên backup thật | Xác nhận nhóm event và 204 ảnh exclude trước khi mở rộng dữ liệu |
+| `annotations.py`, `export.py`, `package.py` | 400 nhãn đã duyệt; v001 đã xuất trên ảnh thật | Upload hai ZIP và checksum; kiểm tra crop trên Colab trước train |
 | `evaluate.py` | Đã có evaluator cho CSV dự đoán | Tạo pipeline inference sinh CSV, kiểm tra thêm báo cáo theo camera/layout |
-| `notebooks/01_prepare.ipynb` | Đã tạo | Chạy trên Colab sau khi có Git remote và ZIP trên Drive |
-| `notebooks/02_train_detector.ipynb`, `03_train_reader.ipynb` | Đã tạo | Chạy smoke test rồi run chính khi nhãn đã duyệt đủ |
+| `notebooks/01_prepare.ipynb` | Đã tạo | Chỉ cần khi muốn tạo lại index/pilot từ backup gốc |
+| `notebooks/02_train_detector.ipynb`, `03_train_reader.ipynb` | Đã tạo | Upload dataset rồi chạy smoke test reader trước run chính |
 | ROI theo camera, baseline OCR, pipeline inference và kiểm tra chất lượng | Chưa có | Triển khai sau khi rà soát nhãn/crop; đo với validation |
 | Adapter trong ứng dụng chụp | Chưa có code ứng dụng trong workspace | Xác minh `capture_id`, frame nguồn, ảnh ghép và thứ tự phản hồi |
 
