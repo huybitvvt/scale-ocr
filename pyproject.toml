@@ -11,6 +11,7 @@ dependencies = ["Pillow>=10"]
 
 [project.optional-dependencies]
 test = ["pytest>=8"]
+prelabel = ["easyocr>=1.7", "opencv-python-headless>=4.10", "numpy>=1.26"]
 
 [project.scripts]
 scale-ocr = "scale_ocr.cli:main"

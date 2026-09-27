@@ -8,8 +8,10 @@ button,input,select{font:inherit;padding:6px}
 .layout{display:grid;grid-template-columns:minmax(400px,1fr) 310px;gap:18px;margin-top:14px}
 aside{background:white;padding:12px;border:1px solid #ddd;align-self:start}
 li{margin:8px 0} .small{font-size:13px;color:#555} .error{color:#a00}
+#previews canvas{display:block;max-width:100%;margin:6px 0 14px;border:1px solid #aaa}
 </style>
 <header><button onclick="move(-1)">← Trước</button><b id="position"></b><button onclick="move(1)">Sau →</button>
+<button onclick="nextDraft()">Ảnh nháp tiếp theo</button><span id="progress" class="small"></span>
 <span id="name"></span></header>
 <div class="layout"><div><canvas id="photo"></canvas><p class="small">Kéo chuột trên ảnh để vẽ vùng dãy số. Khung vàng “mới” chưa được lưu: chọn Cảnh gốc hoặc Zoom rồi bấm “Thêm vùng”. Ảnh ghép có thể có cả hai vùng; chỉ chọn “Toàn ảnh” khi không phân loại được bố cục.</p></div>
 <aside>
@@ -17,6 +19,7 @@ li{margin:8px 0} .small{font-size:13px;color:#555} .error{color:#a00}
 <label>Vùng vừa vẽ<br><select id="kind"><option value="scene">Cảnh gốc</option><option value="zoom">Zoom</option><option value="full">Toàn ảnh</option></select></label><br><br>
 <label>Số nhìn thấy<br><input id="value" placeholder="7.04" autocomplete="off"></label><br><br>
 <button onclick="addBox()">Thêm vùng</button><ol id="boxes"></ol>
+<div id="previews"></div>
 <label>Lý do/mô tả<br><input id="reason" placeholder="mờ, bị che, lóa..."></label><br><br>
 <label>Người gán nhãn<br><input id="annotator"></label><br><br>
 <label>Người duyệt (nếu có)<br><input id="reviewer"></label><br><br>
@@ -28,16 +31,19 @@ const canvas=document.getElementById('photo'),ctx=canvas.getContext('2d');
 const photo=new Image();let items=[],cursor=0,boxes=[],pending=null,start=null;
 const el=id=>document.getElementById(id);
 function current(){return items[cursor]}
-function redraw(){if(!photo.complete||!photo.naturalWidth)return;canvas.width=photo.naturalWidth;canvas.height=photo.naturalHeight;ctx.drawImage(photo,0,0);for(const [i,b] of boxes.entries()){draw(b.xyxy,'#00ff80',String(i+1))}if(pending)draw(pending,'#ffcc00','mới')}
+function redraw(){if(!photo.complete||!photo.naturalWidth)return;canvas.width=photo.naturalWidth;canvas.height=photo.naturalHeight;ctx.drawImage(photo,0,0);for(const [i,b] of boxes.entries()){draw(b.xyxy,'#00ff80',String(i+1))}if(pending)draw(pending,'#ffcc00','mới');renderPreviews()}
 function draw(b,color,label){ctx.strokeStyle=color;ctx.lineWidth=Math.max(2,canvas.width/500);ctx.strokeRect(b[0],b[1],b[2]-b[0],b[3]-b[1]);ctx.fillStyle=color;ctx.font='20px Arial';ctx.fillText(label,b[0],Math.max(20,b[1]-4))}
 function point(ev){const r=canvas.getBoundingClientRect();return [Math.round((ev.clientX-r.left)*canvas.width/r.width),Math.round((ev.clientY-r.top)*canvas.height/r.height)]}
 canvas.addEventListener('pointerdown',ev=>{start=point(ev);canvas.setPointerCapture(ev.pointerId)});
 canvas.addEventListener('pointermove',ev=>{if(!start)return;let p=point(ev);pending=[Math.max(0,Math.min(start[0],p[0])),Math.max(0,Math.min(start[1],p[1])),Math.min(canvas.width,Math.max(start[0],p[0])),Math.min(canvas.height,Math.max(start[1],p[1]))];redraw()});
 canvas.addEventListener('pointerup',()=>{start=null;redraw()});
 function listBoxes(){el('boxes').innerHTML='';boxes.forEach((b,i)=>{let li=document.createElement('li');li.textContent=`${b.view_kind}: ${b.text||'(không có số)'} [${b.xyxy.join(', ')}] `;let x=document.createElement('button');x.textContent='Xóa';x.onclick=()=>{boxes.splice(i,1);listBoxes();redraw()};li.appendChild(x);el('boxes').appendChild(li)})}
+function renderPreviews(){const root=el('previews');root.replaceChildren();if(!photo.naturalWidth)return;boxes.forEach((b,i)=>{const [x1,y1,x2,y2]=b.xyxy;const width=Math.max(1,x2-x1),height=Math.max(1,y2-y1);const title=document.createElement('div');title.textContent=`Vùng ${i+1} — ${b.view_kind}: ${b.text||'(không có số)'}`;root.appendChild(title);const crop=document.createElement('canvas');const scale=Math.min(4,Math.max(1,290/width));crop.width=Math.round(width*scale);crop.height=Math.round(height*scale);crop.getContext('2d').drawImage(photo,x1,y1,width,height,0,0,crop.width,crop.height);root.appendChild(crop)})}
+function updateProgress(){el('progress').textContent=`${items.filter(x=>x.annotation?.review_status==='reviewed').length}/${items.length} đã duyệt`}
 function addBox(){if(!pending||pending[2]-pending[0]<3||pending[3]-pending[1]<3){el('notice').textContent='Hãy vẽ một vùng trên ảnh';return}boxes.push({xyxy:pending,view_kind:el('kind').value,text:el('value').value.trim()});pending=null;el('value').value='';listBoxes();redraw();el('notice').textContent=''}
-function show(){const item=current();el('position').textContent=`${cursor+1}/${items.length}`;el('name').textContent=item.public_id+` [${item.split}]`;const a=item.annotation;boxes=a?structuredClone(a.boxes):[];pending=null;el('status').value=a?.readability||'readable';el('reason').value=a?.reason||'';el('annotator').value=a?.annotator||localStorage.getItem('annotator')||'';el('reviewer').value=a?.reviewer||'';el('reviewed').checked=a?.review_status==='reviewed';el('notice').textContent='';listBoxes();photo.onload=redraw;photo.src='/api/image/'+encodeURIComponent(item.asset_id)}
+function show(){const item=current();el('position').textContent=`${cursor+1}/${items.length}`;el('name').textContent=item.public_id+` [${item.split}]`;const a=item.annotation;boxes=a?structuredClone(a.boxes):[];pending=null;el('status').value=a?.readability||'readable';el('reason').value=a?.reason||'';el('annotator').value=a?.annotator||localStorage.getItem('annotator')||'';el('reviewer').value=a?.reviewer||'';el('reviewed').checked=a?.review_status==='reviewed';el('notice').textContent='';updateProgress();listBoxes();photo.onload=redraw;photo.src='/api/image/'+encodeURIComponent(item.asset_id)}
 function move(delta){cursor=Math.max(0,Math.min(items.length-1,cursor+delta));show()}
+function nextDraft(){for(let step=1;step<=items.length;step++){const next=(cursor+step)%items.length;if(items[next].annotation?.review_status!=='reviewed'){cursor=next;show();return}}el('notice').textContent='Đã duyệt hết ảnh'}
 async function save(){let item=current();let payload={asset_id:item.asset_id,readability:el('status').value,reason:el('reason').value,annotator:el('annotator').value,reviewer:el('reviewer').value,review_status:el('reviewed').checked?'reviewed':'draft',boxes};let response=await fetch('/api/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});let result=await response.json();if(!response.ok){el('notice').textContent=result.error;el('notice').className='error';return}localStorage.setItem('annotator',payload.annotator);item.annotation=payload;el('notice').className='small';if(cursor<items.length-1)move(1);else el('notice').textContent='Đã lưu ảnh cuối'}
 fetch('/api/items').then(r=>r.json()).then(data=>{items=data;if(!items.length){el('name').textContent='Pilot rỗng';return}cursor=Math.max(0,items.findIndex(x=>!x.annotation));show()}).catch(err=>{el('notice').textContent=String(err)})
 </script></html>

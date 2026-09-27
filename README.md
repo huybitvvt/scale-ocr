@@ -18,6 +18,18 @@ python -m scale_ocr annotate --pilot data\v001\pilot.csv --raw-root ..\cloudinar
 
 Mở `http://127.0.0.1:8765/`. Kéo chuột để vẽ khung **dãy số cân**, nhập nguyên văn số hiển thị, rồi thêm vùng. Với ảnh ghép, gán nhãn vùng ở cảnh gốc và vùng zoom nếu cả hai đọc được. Nếu hai vùng hiển thị hai số khác nhau, công cụ không nhận nhãn `readable`: cần kiểm tra ảnh/luồng ghép. Ảnh đen, mờ, bị che hoặc không thấy màn hình cần chọn đúng trạng thái; không đoán số. Nhãn được lưu liên tục vào `data\v001\annotations.jsonl` và có thể mở lại để sửa. Công cụ chỉ lắng nghe máy cục bộ.
 
+400 ảnh pilot hiện có **nhãn nháp** tại `data/v001/annotations.jsonl`: 388 đọc được, 6 không thấy số, 5 không đọc được, 1 chỉ hiện một phần. Nhãn do OCR đề xuất rồi rà trực quan, chưa phải ground truth độc lập. Giao diện đã điền sẵn số và khung cắt; vùng cắt được phóng to bên phải để duyệt nhanh. Sửa số/khung sai, điền tên người duyệt và đánh dấu duyệt khi đã đối chiếu ảnh. Với val/test, người duyệt phải khác `codex-ocr-assisted`. Nút “Ảnh nháp tiếp theo” bỏ qua ảnh đã duyệt. Trước khi train, kiểm tra lại cả các nhãn `readable` có vẻ rõ vì OCR từng nhầm các chữ số rất giống nhau.
+
+Để tạo lại nhãn nháp trên một bản sao dữ liệu, cài thêm dependencies `python -m pip install -e ".[prelabel]"`, rồi chạy:
+
+```powershell
+python tools/prelabel_pilot.py --pilot data/v001/pilot.csv --raw-root ../cloudinary_backup_2026-09-27 --out-dir data/v001/assist
+# Rà contact sheets và ghi audit_decisions.json, manual_boxes.json trong data/v001/assist/
+python tools/import_pilot_drafts.py --pilot data/v001/pilot.csv --candidates data/v001/assist/candidates.json --audit data/v001/assist/audit_decisions.json --manual-boxes data/v001/assist/manual_boxes.json --out data/v001/annotations.jsonl
+```
+
+Lệnh import giữ lại mọi nhãn đã có; dừng máy chủ gán nhãn trước khi chạy để tránh bộ nhớ máy chủ ghi đè file. Các file JSON và ảnh contact sheet nằm trong `data/` đã ignore, không đưa lên repo public.
+
 Trước khi train, reviewer cần duyệt nhãn. Tập val/test yêu cầu `reviewer` khác `annotator`. Chỉ nhãn `reviewed` được xuất. Sau khi đủ nhãn:
 
 ```powershell
