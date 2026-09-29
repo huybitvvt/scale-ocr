@@ -406,7 +406,8 @@ reader_cells[1] = code("""
     RUN_ROOT.mkdir(parents=True, exist_ok=True)
     print('Code commit:', actual_commit)
     print('Disk GiB free:', round(shutil.disk_usage('/content').free / 2**30, 2))
-    subprocess.run(['nvidia-smi'], check=False)
+    assert shutil.which('nvidia-smi'), 'GPU not enabled: Runtime > Change runtime type > T4 GPU, then reconnect'
+    subprocess.run(['nvidia-smi'], check=True)
 """)
 reader_cells[2] = code("""
     # Select all four files from E:\\backup-tramcan\\colab_upload_v001.
