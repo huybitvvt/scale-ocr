@@ -4,6 +4,8 @@ Code chuẩn bị dữ liệu và huấn luyện đọc số cân từ ảnh cam
 
 Repo local nằm trong `E:\backup-tramcan\scale-ocr`; remote public: `https://github.com/huybitvvt/scale-ocr`. Backup gốc ở thư mục cha. Git chỉ chứa code/notebook/tài liệu. Dữ liệu ảnh, nhãn, split, checkpoint nằm ngoài Git hoặc trong `data/` đã ignore. Đã có 400 nhãn pilot được duyệt và dataset v001 đã đóng gói; chưa có mô hình đã train hoặc kết quả accuracy.
 
+Nếu Colab báo lỗi 400/403 khi gắn Google Drive, mở [04_train_reader_upload.ipynb](notebooks/04_train_reader_upload.ipynb). Notebook này không gọi `drive.mount`. Ở cell upload, chọn đồng thời bốn file trong `E:\backup-tramcan\colab_upload_v001`. Sau smoke test mới chạy cell train chính; tải ZIP checkpoint về máy trước khi ngắt runtime. Xem hướng dẫn cụ thể ở [COLAB_GUIDE.md](docs/COLAB_GUIDE.md).
+
 ## Chạy giai đoạn chuẩn bị trên Windows
 
 Mở PowerShell trong thư mục `scale-ocr`:
